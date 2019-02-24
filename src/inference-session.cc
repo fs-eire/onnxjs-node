@@ -1,180 +1,222 @@
+#include <memory>
+#include <stdexcept>
 #include <core/providers/cpu/cpu_provider_factory.h>
 
 #include "inference-session.h"
 
-Napi::FunctionReference InferenceSession::constructor;
-
-Napi::Object InferenceSession::Init(Napi::Env env, Napi::Object exports) {
-  Napi::HandleScope scope(env);
-
-  Napi::Function func = DefineClass(env, "InferenceSession", {
-    InstanceMethod("loadModel", &InferenceSession::LoadModel),
-    InstanceMethod("run", &InferenceSession::Run),
-  });
-
-  constructor = Napi::Persistent(func);
-  constructor.SuppressDestruct();
-
-  exports.Set("InferenceSession", func);
-  return exports;
-}
-
-InferenceSession::InferenceSession(const Napi::CallbackInfo& info) : Napi::ObjectWrap<InferenceSession>(info)  {
-  Napi::Env env = info.Env();
-  Napi::HandleScope scope(env);
-
+InferenceSession::InferenceSession() {
+  // Create Env
   auto status = OrtCreateEnv(ORT_LOGGING_LEVEL_WARNING, "onnxjs", &this->env_);
   if (status) {
-    Napi::Error::New(env, "Failed to create onnxruntime environment").ThrowAsJavaScriptException();
-  }
-  this->sessionOptions_ = OrtCreateSessionOptions();
-}
-
-
-
-Napi::Value InferenceSession::LoadModel(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  Napi::HandleScope scope(env);
-
-  size_t length = info.Length();
-  if (length <= 0 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expect argument: model path").ThrowAsJavaScriptException();
+    throw std::runtime_error("Failed to create onnxruntime environment");
   }
 
-  Napi::String value = info[0].As<Napi::String>();
-  auto status = OrtCreateSession(
-    this->env_,
-#ifdef _WIN32
-    reinterpret_cast<const wchar_t *>(value.Utf16Value().c_str()),
-#else
-    value.Utf8Value().c_str(),
-#endif
-    this->sessionOptions_,
-    &this->session_);
+  // Create allocation info
+  status = OrtCreateCpuAllocatorInfo(OrtDeviceAllocator, OrtMemTypeDefault, &this->allocatorInfo_);
   if (status) {
-    Napi::Error::New(env, "Failed to load model").ThrowAsJavaScriptException();
+    throw std::runtime_error("Failed to create allocation info");
   }
 
-  return env.Undefined();
+  // Create Session Options
+  this->sessionOptions_ = OrtCreateSessionOptions();
+
+  this->session_ = nullptr;
 }
 
-OrtValue * JavascriptTensorToOrtValue(OrtAllocatorInfo *allocatorInfo, Napi::Env env, Napi::Value val) {
-  if (!val.IsObject()) {
-    Napi::Error::New(env, "tensor must be an object").ThrowAsJavaScriptException();
+InferenceSession::~InferenceSession() {
+  if (this->session_) {
+    OrtReleaseSession(this->session_);
+    this->session_ = nullptr;
   }
 
-  auto tensorObject = val.As<Napi::Object>();
-  auto dimsValue = tensorObject.Get("dims");
-  if (!dimsValue.IsArray()) {
-    Napi::Error::New(env, "tensor.dims must be an array").ThrowAsJavaScriptException();
-  }
+  OrtReleaseSessionOptions(this->sessionOptions_);
+  this->sessionOptions_ = nullptr;
 
-  auto dimsArray = dimsValue.As<Napi::Array>();
-  auto len = dimsArray.Length();
-  std::vector<size_t> dims;
-  dims.reserve(len);
-  for (uint32_t i = 0; i < len; i++) {
-    Napi::Value dimValue = dimsArray[i];
-    if (!dimValue.IsNumber()) {
-      Napi::Error::New(env, "tensor.dims must be an array of numbers").ThrowAsJavaScriptException();
-    }
-    auto dimNumber = dimValue.As<Napi::Number>();
-    double dimDouble = dimNumber.DoubleValue();
-    if (floor(dimDouble) != dimDouble || dimDouble < 0 || dimDouble > 4294967295) {
-      Napi::Error::New(env, "invalid dimension").ThrowAsJavaScriptException();
-    }
-    size_t dim = static_cast<size_t>(dimDouble);
-    dims.push_back(dim);
-  }
+  OrtReleaseAllocatorInfo(this->allocatorInfo_);
+  this->allocatorInfo_ = nullptr;
 
-  auto dataValue = tensorObject.Get("data");
-  if (!dataValue.IsTypedArray()) {
-    Napi::Error::New(env, "tensor.data must be an typed array").ThrowAsJavaScriptException();
-  }
-  auto dataTypedArray = dataValue.As<Napi::TypedArray>();
-  if (napi_float32_array != dataTypedArray.TypedArrayType()) {
-    Napi::Error::New(env, "currently only support FLOAT32 typed array").ThrowAsJavaScriptException();
-  }
-  void * buffer = dataTypedArray.ArrayBuffer().Data();
-  size_t byteOffset = dataTypedArray.ByteOffset();
-  size_t byteLength = dataTypedArray.ByteLength();
-  void * data = static_cast<char *>(buffer) + byteOffset;
-  
-  OrtValue *ortTensorValue;
-  OrtCreateTensorWithDataAsOrtValue(allocatorInfo, data, byteLength, &dims[0], dims.size(), ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &ortTensorValue);
-
-  return ortTensorValue;
+  OrtReleaseEnv(this->env_);
+  this->env_ = nullptr;
 }
 
-Napi::Value OrtValueToJavascriptTensor(Napi::Env env, OrtValue *value) {
-  Napi::EscapableHandleScope scope(env);
-  auto obj = Napi::Object::New(env);
-  return scope.Escape(obj);
-}
-
-
-Napi::Value InferenceSession::Run(const Napi::CallbackInfo& info) {
-  Napi::Env env = info.Env();
-  Napi::EscapableHandleScope scope(env);
-  // TODO: implement session.run()
-
-
-  OrtAllocatorInfo *allocatorInfo;
-  OrtCreateCpuAllocatorInfo(OrtDeviceAllocator, OrtMemTypeDefault, &allocatorInfo);
-  // TODO: scope guard for `allocatorInfo`
-
-
-  //
-  // info[0]: inputs                 Tensor[]
-  if (info.Length() <= 0) {
-    Napi::TypeError::New(env, "Expect argument: input tensors").ThrowAsJavaScriptException();
-  }
-  if (!info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expect the first argument to be an array of input tensors").ThrowAsJavaScriptException();
-  }
-  auto passedInInputTensors = info[0].As<Napi::Array>();
-  auto passedInInputsCount = passedInInputTensors.Length();
-  std::vector<OrtValue *> inputValues;
-  inputValues.reserve(passedInInputsCount);
-  for (uint32_t i = 0; i < passedInInputsCount; i++) {
-    OrtValue *value = JavascriptTensorToOrtValue(allocatorInfo, env, passedInInputTensors[i]);
-    if (!value) {
-      Napi::TypeError::New(env, "not a valid tensor input").ThrowAsJavaScriptException();
-    }
-    inputValues.push_back(value);
+void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
+  // Create session and load model
+  auto status = OrtCreateSession(this->env_, modelPath, this->sessionOptions_, &this->session_);
+  if (status) {
+    throw std::runtime_error("Failed to load model");
   }
 
-  OrtAllocator *allocator;
-  auto status = OrtCreateDefaultAllocator(&allocator);
-  // TODO: scope guard for `allocator`
+  // Initialize metadata
 
+  // STEP.1 - Create a temporary allocator
+  OrtAllocator *defaultAllocator;
+  status = OrtCreateDefaultAllocator(&defaultAllocator);
+  if (status) {
+    throw std::runtime_error("Failed to create default allocator");
+  }
+  std::unique_ptr<OrtAllocator, decltype(&OrtReleaseAllocator)> allocator(defaultAllocator, OrtReleaseAllocator);
+
+  // STEP.2 - Get input/output count
   size_t inputCount;
   status = OrtSessionGetInputCount(this->session_, &inputCount);
+  if (status) {
+    throw std::runtime_error("Failed to get model input count");
+  }
   size_t outputCount;
   status = OrtSessionGetOutputCount(this->session_, &outputCount);
+  if (status) {
+    throw std::runtime_error("Failed to get model output count");
+  }
 
-  std::vector<const char *> inputNames;
-  std::vector<const char *> outputNames;
-  inputNames.reserve(inputCount);
-  outputNames.reserve(outputCount);
+  // STEP.3 - Get input/output names
+  this->inputNames_.reserve(inputCount);
   for (size_t i = 0; i < inputCount; i++) {
-    char *str;
-    OrtSessionGetInputName(this->session_, i, allocator, &str);
-    inputNames.push_back(str);
+    char *name;
+    status = OrtSessionGetInputName(this->session_, i, allocator.get(), &name);
+    if (status) {
+      throw std::runtime_error("Failed to get model input name");
+    }
+    this->inputNames_.emplace_back(name);
+    OrtAllocatorFree(allocator.get(), name);
   }
+  this->outputNames_.reserve(outputCount);
   for (size_t i = 0; i < outputCount; i++) {
-    char *str;
-    OrtSessionGetOutputName(this->session_, i, allocator, &str);
-    outputNames.push_back(str);
+    char *name;
+    status = OrtSessionGetOutputName(this->session_, i, allocator.get(), &name);
+    if (status) {
+      throw std::runtime_error("Failed to get model output name");
+    }
+    this->outputNames_.emplace_back(name);
+    OrtAllocatorFree(allocator.get(), name);
   }
 
-  std::vector<OrtValue *> outputValues(outputCount);
+  // STEP.4 - Get input/output type info
+  this->inputDataTypes_.reserve(inputCount);
+  this->inputShapes_.reserve(inputCount);
+  for (size_t i = 0; i < inputCount; i++) {
+    OrtTypeInfo *typeInfo;
+    status = OrtSessionGetInputTypeInfo(this->session_, i, &typeInfo);
+    if (status) {
+      throw std::runtime_error("Failed to get input type info");
+    }
+    const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
 
-  status = OrtRun(this->session_, nullptr, &inputNames[0], &inputValues[0], inputCount, &outputNames[0], outputCount, &outputValues[0]);
+    // Element type
+    auto dataType = OrtGetTensorElementType(tensorInfo);
+    this->inputDataTypes_.push_back(dataType);
 
+    // Shape
+    auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
+    std::vector<int64_t> dims(dimsCount);
+    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    this->inputShapes_.push_back(dims);
+
+    OrtReleaseTypeInfo(typeInfo);
+  }
+
+  this->outputDataTypes_.reserve(outputCount);
+  this->outputShapes_.reserve(outputCount);
   for (size_t i = 0; i < outputCount; i++) {
-    Napi::Value tensorObject = OrtValueToJavascriptTensor(env, outputValues[i]);
+    OrtTypeInfo *typeInfo;
+    status = OrtSessionGetOutputTypeInfo(this->session_, i, &typeInfo);
+    if (status) {
+      throw std::runtime_error("Failed to get output type info");
+    }
+    const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
+
+    // Element type
+    auto dataType = OrtGetTensorElementType(tensorInfo);
+    this->outputDataTypes_.push_back(dataType);
+
+    // Shape
+    auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
+    std::vector<int64_t> dims(dimsCount);
+    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    this->outputShapes_.push_back(dims);
+
+    OrtReleaseTypeInfo(typeInfo);
+  }
+}
+
+std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
+  size_t inputCount = inputTensors.size();
+  std::vector<const char *> inputNames(inputCount);
+  std::vector<OrtValue *> inputs(inputCount);
+  for (size_t i = 0 ; i < inputCount; i++) {
+    inputNames[i] = inputTensors[i].name;
+    auto status = OrtCreateTensorWithDataAsOrtValue(this->allocatorInfo_,
+                                                    inputTensors[i].data,
+                                                    inputTensors[i].dataLength,
+                                                    &inputTensors[i].shape[0],
+                                                    inputTensors[i].shape.size(),
+                                                    inputTensors[i].type, &inputs[i]);
+    if (status) {
+      throw std::runtime_error("Failed to create input tensors");
+    }
   }
 
-  return info.Env().Undefined();
+  size_t outputCount = this->GetOutputNames().size();
+  std::vector<const char *> outputNames(outputCount);
+  for (size_t i = 0 ; i < outputCount; i++) {
+    outputNames[i] = this->GetOutputNames()[i].c_str();
+  }
+
+  std::vector<OrtValue *> outputs(outputCount);
+
+  auto status = OrtRun(this->session_, nullptr, &inputNames[0], &inputs[0], inputNames.size(), &outputNames[0], outputNames.size(), &outputs[0]);
+  if (status) {
+      throw std::runtime_error("Failed to run the model");
+  }
+
+  // Release input values
+  for (size_t i = 0 ; i < inputCount; i++) {
+    OrtReleaseValue(inputs[i]);
+  }
+
+  // Feed output tensors
+  std::vector<Tensor> outputTensors;
+  outputTensors.reserve(outputCount);
+  for (size_t i = 0 ; i < outputCount; i++) {
+    auto value = outputs[i];
+    if (ONNX_TYPE_TENSOR != OrtGetValueType(value)) {
+      throw std::runtime_error("Unsupported value type. Only Tensor value is supported.");
+    }
+
+    void *data;
+    status = OrtGetTensorMutableData(value, &data);
+    if (status) {
+      throw std::runtime_error("Failed to get data from output tensors");
+    }
+
+    OrtTensorTypeAndShapeInfo *tensorInfo;
+    status = OrtGetTensorShapeAndType(value, &tensorInfo);
+    if (status) {
+      throw std::runtime_error("Failed to get tensor info from output tensors");
+    }
+
+    auto dataType = OrtGetTensorElementType(tensorInfo);
+    auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
+    std::vector<int64_t> dims(dimsCount);
+    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    auto elementCount = OrtGetTensorShapeElementCount(tensorInfo);
+    if (elementCount <= 0) {
+      throw std::runtime_error("Invalid element count");
+    }
+
+    if (ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT != dataType) {
+      throw std::runtime_error("currently only support FLOAT32 element type");
+    }
+
+    std::vector<size_t> dimsUnsigned(dimsCount);
+    for (size_t i = 0 ; i < dimsCount; i++) {
+      dimsUnsigned[i] = static_cast<size_t>(dims[i]);
+    }
+
+    Tensor tensor{data, static_cast<size_t>(elementCount * 4), ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, dimsUnsigned};
+    outputTensors.push_back(tensor);
+
+    OrtReleaseTensorTypeAndShapeInfo(tensorInfo);
+  }
+  
+  return outputTensors;
 }

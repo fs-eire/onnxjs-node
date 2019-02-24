@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prepare": "cmake-js compile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "npm run build",
+    "build": "node ./pre-build && cmake-js compile -G\"Visual Studio 15 2017 Win64\" && node ./post-build",
+    "buildd": "node ./pre-build && cmake-js compile -D -G\"Visual Studio 15 2017 Win64\" && node ./post-build --debug",
+    "test": "node ./test",
+    "prepublishOnly": "npm test"
   },
   "repository": {
     "type": "git",
@@ -22,6 +25,7 @@
     "node-addon-api": "^1.6.2"
   },
   "dependencies": {
-    "onnx-proto": "^3.1.1"
+    "onnx-proto": "^3.1.1",
+    "onnxjs": "^0.1.3"
   }
 }
