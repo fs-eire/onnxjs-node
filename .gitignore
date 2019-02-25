@@ -2,5 +2,6 @@
 /build/
 /bin/
 
-/binding.js
-/inference-session-override.js
+/lib/*.js
+/scripts/*.js
+/test/*.js

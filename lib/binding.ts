@@ -17,4 +17,4 @@ export interface InferenceSessionConstructor {
     new(): InferenceSession;
 }
 
-export const binding = require('./bin/onnxruntime.node') as { InferenceSession: InferenceSessionConstructor };
+export const binding = require('../bin/onnxruntime.node') as { InferenceSession: InferenceSessionConstructor };

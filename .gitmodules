@@ -1,6 +1,3 @@
-[submodule "data"]
-	path = data
-	url = https://github.com/Microsoft/onnxjs-demo
-[submodule "onnxjs"]
-	path = onnxjs
-	url = https://github.com/Microsoft/onnxjs.git
+[submodule "deps/onnx"]
+	path = deps/onnx
+	url = https://github.com/onnx/onnx.git

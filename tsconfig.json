@@ -1,6 +1,8 @@
 {
     "include": [
-      "*.ts"
+      "lib",
+      "scripts",
+      "test"
     ],
     "compileOnSave": true,
     "compilerOptions": {

@@ -1,5 +1,5 @@
 const onnxjs = require('onnxjs');
-onnxjs.InferenceSession = require('./inference-session-override').OnnxRuntimeInferenceSession;
+onnxjs.InferenceSession = require('./lib/inference-session-override').OnnxRuntimeInferenceSession;
 
 // Work items for future:
 //
