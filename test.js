@@ -3,9 +3,9 @@ const path = require('path');
 const onnx_proto = require('onnx-proto');
 const assert = require('assert');
 
-const onnxruntime = require('.');
+const onnxruntime = require('./inference-session-override');
 
-const sess = new onnxruntime.InferenceSession();
+const sess = new onnxruntime.OnnxRuntimeInferenceSession();
 sess.loadModel(path.join(__dirname, 'data/data/test/onnx/v7/resnet50/model.onnx'));
 
 const inputTensor0 = onnx_proto.onnx.TensorProto.decode(fs.readFileSync(path.join(__dirname, 'data/data/test/onnx/v7/resnet50/test_data_set_0/input_0.pb')));
@@ -18,13 +18,12 @@ const rawDataOutput0 = new Float32Array(1*1000);
 const rawDataOutput0Uint8 = new Uint8Array(rawDataOutput0.buffer, rawDataOutput0.byteOffset, rawDataOutput0.length * 4);
 rawDataOutput0Uint8.set(outputTensor0.rawData);
 
-const result = sess.run([{dims: [1,3,224,224], data: rawDataInput0}]);
-
-assert(Array.isArray(result));
-assert(result.length === 1);
-assert(result[0]);
-assert(floatEqual(rawDataOutput0, result[0].data));
-
+const result = sess.run([{dims: [1,3,224,224], data: rawDataInput0, type: 'float32'}]);
+result.then(output => {
+    assert(output instanceof Map);
+    assert(output.size === 1);
+    assert(floatEqual(rawDataOutput0, output.values().next().value.data));
+});
 
 function floatEqual(actual, expected) {
     var THRESHOLD_ABSOLUTE_ERROR = 1.0e-4;

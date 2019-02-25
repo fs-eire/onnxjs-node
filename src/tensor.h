@@ -28,7 +28,7 @@ struct Tensor {
     // specify the tensor's name. This is optional.
     const char * name;
 
-    static Tensor From(Napi::Value val, ONNXTensorElementDataType dataType, const char * name = nullptr);
+    static Tensor From(Napi::Value val, const char * name = nullptr);
     Napi::Value ToNapiValue(napi_env env);
 };
 

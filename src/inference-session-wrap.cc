@@ -35,12 +35,12 @@ Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo& info) {
   Napi::HandleScope scope(env);
 
   if (this->initialized_) {
-    Napi::Error::New(env, "Model already loaded. Cannot load model multiple times.").ThrowAsJavaScriptException();
+    throw Napi::Error::New(env, "Model already loaded. Cannot load model multiple times.");
   }
 
   size_t length = info.Length();
   if (length <= 0 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expect argument: model path").ThrowAsJavaScriptException();
+    throw Napi::TypeError::New(env, "Expect argument: model path");
   }
 
   Napi::String value = info[0].As<Napi::String>();
@@ -54,7 +54,7 @@ Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo& info) {
 #endif
     );
   } catch (std::exception const& e) {
-    Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
+    throw Napi::Error::New(env, e.what());
   }
 
   this->initialized_ = true;
@@ -65,7 +65,7 @@ Napi::Value InferenceSessionWrap::GetInputNames(const Napi::CallbackInfo& info) 
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
   if (!this->initialized_) {
-    Napi::Error::New(env, "Session not initialized.").ThrowAsJavaScriptException();
+    throw Napi::Error::New(env, "Session not initialized.");
   }
   return scope.Escape(CreateNapiArrayFrom(env, this->session_->GetInputNames()));
 }
@@ -74,7 +74,7 @@ Napi::Value InferenceSessionWrap::GetOutputNames(const Napi::CallbackInfo& info)
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
   if (!this->initialized_) {
-    Napi::Error::New(env, "Session not initialized.").ThrowAsJavaScriptException();
+    throw Napi::Error::New(env, "Session not initialized.");
   }
   return scope.Escape(CreateNapiArrayFrom(env, this->session_->GetOutputNames()));
 }
@@ -85,20 +85,20 @@ Napi::Value InferenceSessionWrap::Run(const Napi::CallbackInfo& info) {
   Napi::EscapableHandleScope scope(env);
 
   if (!this->initialized_) {
-    Napi::Error::New(env, "Session not initialized.").ThrowAsJavaScriptException();
+    throw Napi::Error::New(env, "Session not initialized.");
   }
   if (info.Length() <= 0) {
-    Napi::TypeError::New(env, "Expect argument: input tensors").ThrowAsJavaScriptException();
+    throw Napi::TypeError::New(env, "Expect argument: input tensors");
   }
   if (!info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expect the first argument to be an array of input tensors").ThrowAsJavaScriptException();
+    throw Napi::TypeError::New(env, "Expect the first argument to be an array of input tensors");
   }
   auto inputTensors = info[0].As<Napi::Array>();
   auto inputTensorCount = inputTensors.Length();
   std::vector<Tensor> inputs;
   inputs.reserve(inputTensorCount);
   for (uint32_t i = 0; i < inputTensorCount; i++) {
-    inputs.emplace_back(Tensor::From(inputTensors[i], this->session_->GetInputDataType(i), this->session_->GetInputNames()[i].c_str()));
+    inputs.emplace_back(Tensor::From(inputTensors[i], this->session_->GetInputNames()[i].c_str()));
   }
 
   auto outputs = this->session_->Run(inputs);

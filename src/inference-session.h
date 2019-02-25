@@ -19,8 +19,6 @@ class InferenceSession {
 
   const std::vector<std::string> & GetInputNames() const { return inputNames_; }
   const std::vector<std::string> & GetOutputNames() const { return outputNames_; }
-  ONNXTensorElementDataType GetInputDataType(uint32_t index) const { return inputDataTypes_[index]; }
-  const OrtAllocatorInfo * GetAllocationInfo() const { return allocatorInfo_; }
 
   std::vector<Tensor> Run(std::vector<Tensor> inputs);
 

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepare": "npm run build",
-    "build": "node ./pre-build && cmake-js compile -G\"Visual Studio 15 2017 Win64\" && node ./post-build",
-    "buildd": "node ./pre-build && cmake-js compile -D -G\"Visual Studio 15 2017 Win64\" && node ./post-build --debug",
+    "build": "tsc && node ./pre-build && cmake-js compile -G\"Visual Studio 15 2017 Win64\" && node ./post-build",
+    "buildd": "tsc && node ./pre-build && cmake-js compile -D -G\"Visual Studio 15 2017 Win64\" && node ./post-build --debug",
     "test": "node ./test",
     "prepublishOnly": "npm test"
   },
@@ -22,10 +22,11 @@
   "homepage": "https://github.com/fs-eire/onnxjs-node#readme",
   "devDependencies": {
     "cmake-js": "^5.1.0",
+    "typescript": "^3.1.6",
+    "onnx-proto": "^3.1.1",
     "node-addon-api": "^1.6.2"
   },
   "dependencies": {
-    "onnx-proto": "^3.1.1",
     "onnxjs": "^0.1.3"
   }
 }

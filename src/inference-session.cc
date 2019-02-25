@@ -178,7 +178,7 @@ std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
   outputTensors.reserve(outputCount);
   for (size_t i = 0 ; i < outputCount; i++) {
     auto value = outputs[i];
-    if (ONNX_TYPE_TENSOR != OrtGetValueType(value)) {
+    if (!OrtIsTensor(value)) {
       throw std::runtime_error("Unsupported value type. Only Tensor value is supported.");
     }
 
