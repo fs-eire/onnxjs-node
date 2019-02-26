@@ -3,27 +3,27 @@
 
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "core/session/onnxruntime_c_api.h"
 
 #include "tensor.h"
 
 class InferenceSession {
- public:
+public:
   static void Init();
   InferenceSession();
   ~InferenceSession();
 
   void LoadModel(const ORTCHAR_T *modelFilePath);
 
-  const std::vector<std::string> & GetInputNames() const { return inputNames_; }
-  const std::vector<std::string> & GetOutputNames() const { return outputNames_; }
+  const std::vector<std::string> &GetInputNames() const { return inputNames_; }
+  const std::vector<std::string> &GetOutputNames() const { return outputNames_; }
 
   std::vector<Tensor> Run(const std::vector<Tensor> &inputs);
 
- private:
+private:
   OrtSessionOptions *sessionOptions_;
   OrtSession *session_;
   OrtAllocatorInfo *allocatorInfo_;

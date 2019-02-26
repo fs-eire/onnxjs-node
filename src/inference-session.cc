@@ -1,11 +1,11 @@
-#include <memory>
-#include <stdexcept>
-#include <sstream>
 #include <core/providers/cpu/cpu_provider_factory.h>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
 
 #include "inference-session.h"
 
-static OrtEnv * g_env;
+static OrtEnv *g_env;
 
 void InferenceSession::Init() {
   // Create Env
@@ -119,7 +119,7 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
       what << "Failed to get input type info: " << OrtGetErrorMessage(status);
       throw std::runtime_error(what.str());
     }
-    const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
+    const OrtTensorTypeAndShapeInfo *tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
 
     // Element type
     auto dataType = OrtGetTensorElementType(tensorInfo);
@@ -146,7 +146,7 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
       what << "Failed to get output type info: " << OrtGetErrorMessage(status);
       throw std::runtime_error(what.str());
     }
-    const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
+    const OrtTensorTypeAndShapeInfo *tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
 
     // Element type
     auto dataType = OrtGetTensorElementType(tensorInfo);
@@ -173,14 +173,12 @@ std::vector<Tensor> InferenceSession::Run(const std::vector<Tensor> &inputTensor
   size_t inputCount = inputTensors.size();
   std::vector<const char *> inputNames(inputCount);
   std::vector<OrtValue *> inputs(inputCount);
-  for (size_t i = 0 ; i < inputCount; i++) {
+  for (size_t i = 0; i < inputCount; i++) {
     inputNames[i] = inputTensors[i].name;
-    auto status = OrtCreateTensorWithDataAsOrtValue(this->allocatorInfo_,
-                                                    inputTensors[i].data,
-                                                    inputTensors[i].dataLength,
-                                                    inputTensors[i].shape.empty() ? nullptr : &inputTensors[i].shape[0],
-                                                    inputTensors[i].shape.size(),
-                                                    inputTensors[i].type, &inputs[i]);
+    auto status =
+        OrtCreateTensorWithDataAsOrtValue(this->allocatorInfo_, inputTensors[i].data, inputTensors[i].dataLength,
+                                          inputTensors[i].shape.empty() ? nullptr : &inputTensors[i].shape[0],
+                                          inputTensors[i].shape.size(), inputTensors[i].type, &inputs[i]);
     if (status) {
       std::ostringstream what;
       what << "Failed to create input tensors: " << OrtGetErrorMessage(status);
@@ -189,39 +187,34 @@ std::vector<Tensor> InferenceSession::Run(const std::vector<Tensor> &inputTensor
   }
 
   std::vector<const char *> outputNames(outputCount);
-  for (size_t i = 0 ; i < outputCount; i++) {
+  for (size_t i = 0; i < outputCount; i++) {
     outputNames[i] = this->GetOutputNames()[i].c_str();
   }
 
   std::vector<OrtValue *> outputs(outputCount);
 
-  auto status = OrtRun(this->session_,
-                       nullptr,
-                       inputNames.empty() ? nullptr : &inputNames[0],
-                       inputs.empty() ? nullptr : &inputs[0],
-                       inputNames.size(),
-                       &outputNames[0],
-                       outputNames.size(),
+  auto status = OrtRun(this->session_, nullptr, inputNames.empty() ? nullptr : &inputNames[0],
+                       inputs.empty() ? nullptr : &inputs[0], inputNames.size(), &outputNames[0], outputNames.size(),
                        &outputs[0]);
   if (status) {
-      std::ostringstream what;
-      what << "Failed to run the model: " << OrtGetErrorMessage(status);
-      throw std::runtime_error(what.str());
+    std::ostringstream what;
+    what << "Failed to run the model: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
 
   // Release input values
-  for (size_t i = 0 ; i < inputCount; i++) {
+  for (size_t i = 0; i < inputCount; i++) {
     OrtReleaseValue(inputs[i]);
   }
 
   // Feed output tensors
   std::vector<Tensor> outputTensors;
   outputTensors.reserve(outputCount);
-  for (size_t i = 0 ; i < outputCount; i++) {
+  for (size_t i = 0; i < outputCount; i++) {
     auto value = outputs[i];
     auto &tensor = Tensor::From(value);
     outputTensors.push_back(tensor);
   }
-  
+
   return std::move(outputTensors);
 }

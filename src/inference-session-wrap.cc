@@ -9,12 +9,11 @@ Napi::FunctionReference InferenceSessionWrap::constructor;
 Napi::Object InferenceSessionWrap::Init(Napi::Env env, Napi::Object exports) {
   Napi::HandleScope scope(env);
 
-  Napi::Function func = DefineClass(env, "InferenceSession", {
-    InstanceMethod("loadModel", &InferenceSessionWrap::LoadModel),
-    InstanceMethod("run", &InferenceSessionWrap::Run),
-    InstanceAccessor("inputNames", &InferenceSessionWrap::GetInputNames, nullptr, napi_default, nullptr),
-    InstanceAccessor("outputNames", &InferenceSessionWrap::GetOutputNames, nullptr, napi_default, nullptr)
-  });
+  Napi::Function func = DefineClass(
+      env, "InferenceSession",
+      {InstanceMethod("loadModel", &InferenceSessionWrap::LoadModel), InstanceMethod("run", &InferenceSessionWrap::Run),
+       InstanceAccessor("inputNames", &InferenceSessionWrap::GetInputNames, nullptr, napi_default, nullptr),
+       InstanceAccessor("outputNames", &InferenceSessionWrap::GetOutputNames, nullptr, napi_default, nullptr)});
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
@@ -23,14 +22,11 @@ Napi::Object InferenceSessionWrap::Init(Napi::Env env, Napi::Object exports) {
   return exports;
 }
 
-InferenceSessionWrap::InferenceSessionWrap(const Napi::CallbackInfo& info)
-  : Napi::ObjectWrap<InferenceSessionWrap>(info)
-  , initialized_(false)
-  , session_(std::make_unique<InferenceSession>()) {}
+InferenceSessionWrap::InferenceSessionWrap(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<InferenceSessionWrap>(info), initialized_(false),
+      session_(std::make_unique<InferenceSession>()) {}
 
-
-
-Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo& info) {
+Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -48,12 +44,12 @@ Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo& info) {
   try {
     this->session_->LoadModel(
 #ifdef _WIN32
-      reinterpret_cast<const wchar_t *>(value.Utf16Value().c_str())
+        reinterpret_cast<const wchar_t *>(value.Utf16Value().c_str())
 #else
-      value.Utf8Value().c_str()
+        value.Utf8Value().c_str()
 #endif
     );
-  } catch (std::exception const& e) {
+  } catch (std::exception const &e) {
     throw Napi::Error::New(env, e.what());
   }
 
@@ -61,7 +57,7 @@ Napi::Value InferenceSessionWrap::LoadModel(const Napi::CallbackInfo& info) {
   return env.Undefined();
 }
 
-Napi::Value InferenceSessionWrap::GetInputNames(const Napi::CallbackInfo& info) {
+Napi::Value InferenceSessionWrap::GetInputNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
   if (!this->initialized_) {
@@ -70,7 +66,7 @@ Napi::Value InferenceSessionWrap::GetInputNames(const Napi::CallbackInfo& info) 
   return scope.Escape(CreateNapiArrayFrom(env, this->session_->GetInputNames()));
 }
 
-Napi::Value InferenceSessionWrap::GetOutputNames(const Napi::CallbackInfo& info) {
+Napi::Value InferenceSessionWrap::GetOutputNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
   if (!this->initialized_) {
@@ -79,8 +75,7 @@ Napi::Value InferenceSessionWrap::GetOutputNames(const Napi::CallbackInfo& info)
   return scope.Escape(CreateNapiArrayFrom(env, this->session_->GetOutputNames()));
 }
 
-
-Napi::Value InferenceSessionWrap::Run(const Napi::CallbackInfo& info) {
+Napi::Value InferenceSessionWrap::Run(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::EscapableHandleScope scope(env);
 
@@ -102,16 +97,16 @@ Napi::Value InferenceSessionWrap::Run(const Napi::CallbackInfo& info) {
   }
 
   try {
-      auto outputs = this->session_->Run(inputs);
-      auto outputTensorCount = static_cast<uint32_t>(outputs.size());
-      auto outputTensors = Napi::Array::New(env, outputTensorCount);
-      for (uint32_t i = 0; i < outputTensorCount; i++) {
-        outputTensors.Set(i, outputs[i].ToNapiValue(env));
-        OrtReleaseValue(outputs[i].value);
-      }
+    auto outputs = this->session_->Run(inputs);
+    auto outputTensorCount = static_cast<uint32_t>(outputs.size());
+    auto outputTensors = Napi::Array::New(env, outputTensorCount);
+    for (uint32_t i = 0; i < outputTensorCount; i++) {
+      outputTensors.Set(i, outputs[i].ToNapiValue(env));
+      OrtReleaseValue(outputs[i].value);
+    }
 
-      return scope.Escape(outputTensors);
-  } catch (std::exception const& e) {
-      throw Napi::Error::New(env, e.what());
+    return scope.Escape(outputTensors);
+  } catch (std::exception const &e) {
+    throw Napi::Error::New(env, e.what());
   }
 }

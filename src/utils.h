@@ -3,11 +3,10 @@
 
 #pragma once
 
-#include <vector>
 #include <napi.h>
+#include <vector>
 
-template <typename T>
-Napi::Value CreateNapiArrayFrom(napi_env env, const std::vector<T> &vec) {
+template <typename T> Napi::Value CreateNapiArrayFrom(napi_env env, const std::vector<T> &vec) {
   Napi::EscapableHandleScope scope(env);
   auto array = Napi::Array::New(env, vec.size());
   for (uint32_t i = 0; i < vec.size(); i++) {

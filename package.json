@@ -8,7 +8,8 @@
     "build": "tsc && node ./scripts/build",
     "buildd": "tsc && node ./scripts/build --debug",
     "test": "mocha ./test/test-main",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm test",
+    "format": "clang-format --glob=\"{{lib,test,scripts}/**/*.ts,src/**/*.{cc,h}}\" --style=file -i"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,8 @@
   "devDependencies": {
     "@types/globby": "^8.0.0",
     "@types/mocha": "^5.2.6",
+    "@types/rimraf": "^2.0.2",
+    "clang-format": "^1.2.4",
     "cmake-js": "^5.1.0",
     "globby": "^9.0.0",
     "mocha": "^6.0.2",
