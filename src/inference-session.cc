@@ -1,20 +1,29 @@
 #include <memory>
 #include <stdexcept>
+#include <sstream>
 #include <core/providers/cpu/cpu_provider_factory.h>
 
 #include "inference-session.h"
 
-InferenceSession::InferenceSession() {
-  // Create Env
-  auto status = OrtCreateEnv(ORT_LOGGING_LEVEL_WARNING, "onnxjs", &this->env_);
-  if (status) {
-    throw std::runtime_error("Failed to create onnxruntime environment");
-  }
+static OrtEnv * g_env;
 
-  // Create allocation info
-  status = OrtCreateCpuAllocatorInfo(OrtDeviceAllocator, OrtMemTypeDefault, &this->allocatorInfo_);
+void InferenceSession::Init() {
+  // Create Env
+  auto status = OrtCreateEnv(ORT_LOGGING_LEVEL_WARNING, "onnxjs", &g_env);
   if (status) {
-    throw std::runtime_error("Failed to create allocation info");
+    std::ostringstream what;
+    what << "Failed to create onnxruntime environment: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
+  }
+}
+
+InferenceSession::InferenceSession() {
+  // Create allocation info
+  auto status = OrtCreateCpuAllocatorInfo(OrtDeviceAllocator, OrtMemTypeDefault, &this->allocatorInfo_);
+  if (status) {
+    std::ostringstream what;
+    what << "Failed to create allocation info: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
 
   // Create Session Options
@@ -34,16 +43,15 @@ InferenceSession::~InferenceSession() {
 
   OrtReleaseAllocatorInfo(this->allocatorInfo_);
   this->allocatorInfo_ = nullptr;
-
-  OrtReleaseEnv(this->env_);
-  this->env_ = nullptr;
 }
 
 void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
   // Create session and load model
-  auto status = OrtCreateSession(this->env_, modelPath, this->sessionOptions_, &this->session_);
+  auto status = OrtCreateSession(g_env, modelPath, this->sessionOptions_, &this->session_);
   if (status) {
-    throw std::runtime_error("Failed to load model");
+    std::ostringstream what;
+    what << "Failed to load model: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
 
   // Initialize metadata
@@ -52,7 +60,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
   OrtAllocator *defaultAllocator;
   status = OrtCreateDefaultAllocator(&defaultAllocator);
   if (status) {
-    throw std::runtime_error("Failed to create default allocator");
+    std::ostringstream what;
+    what << "Failed to create default allocator: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
   std::unique_ptr<OrtAllocator, decltype(&OrtReleaseAllocator)> allocator(defaultAllocator, OrtReleaseAllocator);
 
@@ -60,12 +70,16 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
   size_t inputCount;
   status = OrtSessionGetInputCount(this->session_, &inputCount);
   if (status) {
-    throw std::runtime_error("Failed to get model input count");
+    std::ostringstream what;
+    what << "Failed to get model input count: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
   size_t outputCount;
   status = OrtSessionGetOutputCount(this->session_, &outputCount);
   if (status) {
-    throw std::runtime_error("Failed to get model output count");
+    std::ostringstream what;
+    what << "Failed to get model output count: " << OrtGetErrorMessage(status);
+    throw std::runtime_error(what.str());
   }
 
   // STEP.3 - Get input/output names
@@ -74,7 +88,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     char *name;
     status = OrtSessionGetInputName(this->session_, i, allocator.get(), &name);
     if (status) {
-      throw std::runtime_error("Failed to get model input name");
+      std::ostringstream what;
+      what << "Failed to get model input name: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
     }
     this->inputNames_.emplace_back(name);
     OrtAllocatorFree(allocator.get(), name);
@@ -84,7 +100,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     char *name;
     status = OrtSessionGetOutputName(this->session_, i, allocator.get(), &name);
     if (status) {
-      throw std::runtime_error("Failed to get model output name");
+      std::ostringstream what;
+      what << "Failed to get model output name: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
     }
     this->outputNames_.emplace_back(name);
     OrtAllocatorFree(allocator.get(), name);
@@ -97,7 +115,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     OrtTypeInfo *typeInfo;
     status = OrtSessionGetInputTypeInfo(this->session_, i, &typeInfo);
     if (status) {
-      throw std::runtime_error("Failed to get input type info");
+      std::ostringstream what;
+      what << "Failed to get input type info: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
     }
     const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
 
@@ -108,7 +128,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     // Shape
     auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
     std::vector<int64_t> dims(dimsCount);
-    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    if (dimsCount > 0) {
+      OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    }
     this->inputShapes_.push_back(dims);
 
     OrtReleaseTypeInfo(typeInfo);
@@ -120,7 +142,9 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     OrtTypeInfo *typeInfo;
     status = OrtSessionGetOutputTypeInfo(this->session_, i, &typeInfo);
     if (status) {
-      throw std::runtime_error("Failed to get output type info");
+      std::ostringstream what;
+      what << "Failed to get output type info: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
     }
     const OrtTensorTypeAndShapeInfo* tensorInfo = OrtCastTypeInfoToTensorInfo(typeInfo);
 
@@ -131,14 +155,21 @@ void InferenceSession::LoadModel(const ORTCHAR_T *modelPath) {
     // Shape
     auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
     std::vector<int64_t> dims(dimsCount);
-    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    if (dimsCount > 0) {
+      OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    }
     this->outputShapes_.push_back(dims);
 
     OrtReleaseTypeInfo(typeInfo);
   }
 }
 
-std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
+std::vector<Tensor> InferenceSession::Run(const std::vector<Tensor> &inputTensors) {
+  size_t outputCount = this->GetOutputNames().size();
+  if (outputCount == 0) {
+    return std::vector<Tensor>();
+  }
+
   size_t inputCount = inputTensors.size();
   std::vector<const char *> inputNames(inputCount);
   std::vector<OrtValue *> inputs(inputCount);
@@ -147,15 +178,16 @@ std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
     auto status = OrtCreateTensorWithDataAsOrtValue(this->allocatorInfo_,
                                                     inputTensors[i].data,
                                                     inputTensors[i].dataLength,
-                                                    &inputTensors[i].shape[0],
+                                                    inputTensors[i].shape.empty() ? nullptr : &inputTensors[i].shape[0],
                                                     inputTensors[i].shape.size(),
                                                     inputTensors[i].type, &inputs[i]);
     if (status) {
-      throw std::runtime_error("Failed to create input tensors");
+      std::ostringstream what;
+      what << "Failed to create input tensors: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
     }
   }
 
-  size_t outputCount = this->GetOutputNames().size();
   std::vector<const char *> outputNames(outputCount);
   for (size_t i = 0 ; i < outputCount; i++) {
     outputNames[i] = this->GetOutputNames()[i].c_str();
@@ -163,9 +195,18 @@ std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
 
   std::vector<OrtValue *> outputs(outputCount);
 
-  auto status = OrtRun(this->session_, nullptr, &inputNames[0], &inputs[0], inputNames.size(), &outputNames[0], outputNames.size(), &outputs[0]);
+  auto status = OrtRun(this->session_,
+                       nullptr,
+                       inputNames.empty() ? nullptr : &inputNames[0],
+                       inputs.empty() ? nullptr : &inputs[0],
+                       inputNames.size(),
+                       &outputNames[0],
+                       outputNames.size(),
+                       &outputs[0]);
   if (status) {
-      throw std::runtime_error("Failed to run the model");
+      std::ostringstream what;
+      what << "Failed to run the model: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
   }
 
   // Release input values
@@ -178,45 +219,9 @@ std::vector<Tensor> InferenceSession::Run(std::vector<Tensor> inputTensors) {
   outputTensors.reserve(outputCount);
   for (size_t i = 0 ; i < outputCount; i++) {
     auto value = outputs[i];
-    if (!OrtIsTensor(value)) {
-      throw std::runtime_error("Unsupported value type. Only Tensor value is supported.");
-    }
-
-    void *data;
-    status = OrtGetTensorMutableData(value, &data);
-    if (status) {
-      throw std::runtime_error("Failed to get data from output tensors");
-    }
-
-    OrtTensorTypeAndShapeInfo *tensorInfo;
-    status = OrtGetTensorShapeAndType(value, &tensorInfo);
-    if (status) {
-      throw std::runtime_error("Failed to get tensor info from output tensors");
-    }
-
-    auto dataType = OrtGetTensorElementType(tensorInfo);
-    auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
-    std::vector<int64_t> dims(dimsCount);
-    OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
-    auto elementCount = OrtGetTensorShapeElementCount(tensorInfo);
-    if (elementCount <= 0) {
-      throw std::runtime_error("Invalid element count");
-    }
-
-    if (ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT != dataType) {
-      throw std::runtime_error("currently only support FLOAT32 element type");
-    }
-
-    std::vector<size_t> dimsUnsigned(dimsCount);
-    for (size_t i = 0 ; i < dimsCount; i++) {
-      dimsUnsigned[i] = static_cast<size_t>(dims[i]);
-    }
-
-    Tensor tensor{data, static_cast<size_t>(elementCount * 4), ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, dimsUnsigned};
+    auto &tensor = Tensor::From(value);
     outputTensors.push_back(tensor);
-
-    OrtReleaseTensorTypeAndShapeInfo(tensorInfo);
   }
   
-  return outputTensors;
+  return std::move(outputTensors);
 }

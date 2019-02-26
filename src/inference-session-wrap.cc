@@ -101,12 +101,17 @@ Napi::Value InferenceSessionWrap::Run(const Napi::CallbackInfo& info) {
     inputs.emplace_back(Tensor::From(inputTensors[i], this->session_->GetInputNames()[i].c_str()));
   }
 
-  auto outputs = this->session_->Run(inputs);
-  auto outputTensorCount = static_cast<uint32_t>(outputs.size());
-  auto outputTensors = Napi::Array::New(env, outputTensorCount);
-  for (uint32_t i = 0; i < outputTensorCount; i++) {
-    outputTensors.Set(i, outputs[i].ToNapiValue(env));
-  }
+  try {
+      auto outputs = this->session_->Run(inputs);
+      auto outputTensorCount = static_cast<uint32_t>(outputs.size());
+      auto outputTensors = Napi::Array::New(env, outputTensorCount);
+      for (uint32_t i = 0; i < outputTensorCount; i++) {
+        outputTensors.Set(i, outputs[i].ToNapiValue(env));
+        OrtReleaseValue(outputs[i].value);
+      }
 
-  return scope.Escape(outputTensors);
+      return scope.Escape(outputTensors);
+  } catch (std::exception const& e) {
+      throw Napi::Error::New(env, e.what());
+  }
 }

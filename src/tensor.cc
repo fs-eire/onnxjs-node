@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "tensor.h"
 #include "core/session/onnxruntime_c_api.h"
 #include "utils.h"
@@ -118,8 +120,72 @@ Tensor Tensor::From(Napi::Value val, const char * name) {
   size_t byteLength = dataTypedArray.ByteLength();
   void * data = static_cast<char *>(buffer) + byteOffset;
   
-  return {data, byteLength, dataType, dims, name};
+  Tensor t;
+  t.data = data;
+  t.dataLength = byteLength;
+  t.type = dataType;
+  t.shape = dims;
+  t.name = name;
+  return t;
 }
+
+Tensor Tensor::From(OrtValue *value, const char * name) {
+    if (!OrtIsTensor(value)) {
+      throw std::runtime_error("Unsupported value type. Only Tensor value is supported.");
+    }
+
+    void *data;
+    auto status = OrtGetTensorMutableData(value, &data);
+    if (status) {
+      std::ostringstream what;
+      what << "Failed to get data from output tensors: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
+    }
+
+    OrtTensorTypeAndShapeInfo *tensorInfo;
+    status = OrtGetTensorShapeAndType(value, &tensorInfo);
+    if (status) {
+      std::ostringstream what;
+      what << "Failed to get tensor info from output tensors: " << OrtGetErrorMessage(status);
+      throw std::runtime_error(what.str());
+    }
+    std::unique_ptr<OrtTensorTypeAndShapeInfo, decltype(&OrtReleaseTensorTypeAndShapeInfo)>
+        tensorInfoScopeGuard(tensorInfo, OrtReleaseTensorTypeAndShapeInfo);
+
+    auto dataType = OrtGetTensorElementType(tensorInfo);
+    auto dimsCount = OrtGetNumOfDimensions(tensorInfo);
+    std::vector<int64_t> dims(dimsCount);
+    if (dimsCount > 0) {
+      OrtGetDimensions(tensorInfo, &dims[0], dimsCount);
+    }
+    auto elementCount = OrtGetTensorShapeElementCount(tensorInfo);
+    if (elementCount <= 0) {
+      std::ostringstream what;
+      what << "Invalid element count (" << elementCount << ")";
+      throw std::runtime_error(what.str());
+    }
+
+    auto byteLength = static_cast<size_t>(elementCount) * DATA_TYPE_ELEMENT_SIZE_MAP[dataType];
+    if (byteLength == 0) {
+      std::ostringstream what;
+      what << "unsupported data type (" << dataType << ")";
+      throw std::runtime_error(what.str());
+    }
+
+    std::vector<size_t> dimsUnsigned(dimsCount);
+    for (size_t i = 0 ; i < dimsCount; i++) {
+      dimsUnsigned[i] = static_cast<size_t>(dims[i]);
+    }
+
+    Tensor t;
+    t.data = data;
+    t.dataLength = byteLength;
+    t.type = dataType;
+    t.shape = dimsUnsigned;
+    t.value = value;
+    return t;
+}
+
 
 Napi::Value Tensor::ToNapiValue(napi_env env) {
   Napi::EscapableHandleScope scope(env);

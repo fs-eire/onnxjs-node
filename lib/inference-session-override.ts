@@ -9,12 +9,12 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
     private binding?: Binding.InferenceSession;
 
     constructor(config?: InferenceSession.Config) {
-        let useOnnxRuntime = config && typeof config.backendHint === 'string' && config.backendHint !== 'onnxruntime';
+        let useOnnxRuntime = !config || typeof config.backendHint !== 'string' || config.backendHint === 'onnxruntime';
 
         if (useOnnxRuntime) {
-            this.alternative = new OnnxjsInferenceSession(config);
-        } else {
             this.binding = new Binding.binding.InferenceSession();
+        } else {
+            this.alternative = new OnnxjsInferenceSession(config);
         }
     }
 

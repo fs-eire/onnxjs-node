@@ -28,7 +28,11 @@ struct Tensor {
     // specify the tensor's name. This is optional.
     const char * name;
 
+    // the temporary underlying OrtValue pointer.
+    OrtValue * value;
+
     static Tensor From(Napi::Value val, const char * name = nullptr);
+    static Tensor From(OrtValue *value, const char * name = nullptr);
     Napi::Value ToNapiValue(napi_env env);
 };
 

@@ -14,6 +14,7 @@
         "es2015",
         "dom",
       ],
+      "sourceMap": true,
       "noUnusedLocals": true,
       "noImplicitReturns": true,
       "noImplicitThis": true,

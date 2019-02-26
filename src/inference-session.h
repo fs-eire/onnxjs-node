@@ -12,6 +12,7 @@
 
 class InferenceSession {
  public:
+  static void Init();
   InferenceSession();
   ~InferenceSession();
 
@@ -20,10 +21,9 @@ class InferenceSession {
   const std::vector<std::string> & GetInputNames() const { return inputNames_; }
   const std::vector<std::string> & GetOutputNames() const { return outputNames_; }
 
-  std::vector<Tensor> Run(std::vector<Tensor> inputs);
+  std::vector<Tensor> Run(const std::vector<Tensor> &inputs);
 
  private:
-  OrtEnv *env_;
   OrtSessionOptions *sessionOptions_;
   OrtSession *session_;
   OrtAllocatorInfo *allocatorInfo_;
