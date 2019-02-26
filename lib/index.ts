@@ -1,6 +1,5 @@
-const os = require('os');
-
-const onnxjs = require('onnxjs');
+import * as os from 'os';
+import * as onnxjs from 'onnxjs';
 
 // check if Node.js
 if (typeof process !== 'undefined' && process && process.release && process.release.name === 'node') {
@@ -19,14 +18,8 @@ if (typeof process !== 'undefined' && process && process.release && process.rele
         throw new Error(`onnxruntime node binding does not support non little-endian platform`);
     }
 
-    onnxjs.InferenceSession = require('./lib/inference-session-override').OnnxRuntimeInferenceSession;
+    // force re-assign overwritten property 'InferenceSession'
+    (onnxjs as any).InferenceSession = require('./inference-session-override').OnnxRuntimeInferenceSession;
 }
 
-// Work items for future:
-//
-// 0 - fix memory leak for inference result (output OrtValue)      - DONE
-// 1 - support other tensor types (currently only support float32) - DONE
-// 2 - typescript type declaration                                 - DONE
-// 3 - integration with ONNX.js                                    - DONE
-// 4 - refine API (a javascript wrapper on native module)          - DONE
-// 5 - publish npm module
+export = onnxjs;

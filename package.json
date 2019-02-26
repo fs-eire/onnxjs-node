@@ -3,7 +3,7 @@
   "description": "",
   "version": "0.0.1",
   "author": "fs-eire",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
     "build": "tsc && node ./scripts/build",
