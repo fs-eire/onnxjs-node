@@ -19,7 +19,7 @@
     "module_path": "./bin/napi-v{napi_build_version}",
     "package_name": "onnxruntime-{platform}-{arch}-{node_napi_label}.tar.gz",
     "host": "https://github.com/fs-eire/onnxjs-node/releases/download/",
-    "remote_path": "{version}",
+    "remote_path": "v{version}",
     "napi_versions": [3]
   },
   "repository": {
