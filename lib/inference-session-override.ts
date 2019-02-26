@@ -4,7 +4,7 @@ import * as Binding from './binding';
 const OnnxjsInferenceSession = InferenceSession;
 
 export class OnnxRuntimeInferenceSession implements InferenceSession {
-  private alternative?: InferenceSession;
+  private onnxjsFallback?: InferenceSession;
 
   private binding?: Binding.InferenceSession;
 
@@ -14,7 +14,8 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
     if (useOnnxRuntime) {
       this.binding = new Binding.binding.InferenceSession();
     } else {
-      this.alternative = new OnnxjsInferenceSession(config);
+      this.onnxjsFallback = new OnnxjsInferenceSession(config);
+      console.log('fallback');
     }
   }
 
@@ -23,8 +24,8 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
   loadModel(buffer: ArrayBuffer|SharedArrayBuffer, byteOffset?: number, length?: number): Promise<void>;
   loadModel(buffer: Uint8Array): Promise<void>;
   async loadModel(arg0: any, arg1?: any, arg2?: any): Promise<void> {
-    if (this.alternative) {
-      return this.alternative.loadModel(arg0, arg1, arg2);
+    if (this.onnxjsFallback) {
+      return this.onnxjsFallback.loadModel(arg0, arg1, arg2);
     }
 
     if (typeof arg0 !== 'string') {
@@ -39,6 +40,10 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
 
   async run(inputFeed: InferenceSession.InputType, options?: InferenceSession.RunOptions):
       Promise<ReadonlyMap<string, Tensor>> {
+    if (this.onnxjsFallback) {
+      return this.onnxjsFallback.run(inputFeed, options);
+    }
+
     if (!this.binding) {
       throw new Error('session not initialized');
     }
@@ -80,10 +85,18 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
   }
 
   startProfiling(): void {
+    if (this.onnxjsFallback) {
+      return this.onnxjsFallback.startProfiling();
+    }
+
     throw new Error('Method not implemented.');
   }
 
   endProfiling(): void {
+    if (this.onnxjsFallback) {
+      return this.onnxjsFallback.endProfiling();
+    }
+
     throw new Error('Method not implemented.');
   }
 }

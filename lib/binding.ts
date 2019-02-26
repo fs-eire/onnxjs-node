@@ -17,4 +17,9 @@ export interface InferenceSessionConstructor {
   new(): InferenceSession;
 }
 
-export const binding = require('../bin/onnxruntime.node') as {InferenceSession: InferenceSessionConstructor};
+// construct binding file path
+const GPU_ENABLED = false; // TODO: handle GPU
+const suffix = GPU_ENABLED ? '_gpu' : '';
+const arch = process.platform === 'win32' ? 'win' : 'linux';
+
+export const binding = require(`../bin/${arch}${suffix}-x64/onnxruntime${suffix}.node`) as {InferenceSession: InferenceSessionConstructor};

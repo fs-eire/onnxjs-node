@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import * as fs_extra from 'fs-extra';
 
 // command line flags
 const DEBUG = process.argv.slice(2).indexOf('--debug') !== -1 || process.argv.slice(2).indexOf('-d') !== -1;
@@ -16,7 +17,7 @@ const BIN = path.join(ROOT, 'bin');
 const NPM_BIN_FOLDER = execSync('npm bin', {encoding: 'utf8'}).trimRight();
 const CMAKE_JS_FULL_PATH = path.join(NPM_BIN_FOLDER, 'cmake-js');
 const BUILD_OUTPUT_FOLDER = path.join(ROOT, 'build', BUILD_TYPE);
-const ONNXRUNTIME_DIST = path.join(ROOT, 'onnxruntime');
+const ONNXRUNTIME_DIST = path.join(ROOT, 'onnxruntime', 'bin');
 
 // ====================
 
@@ -51,17 +52,21 @@ if (fs.existsSync(BIN)) {
 fs.mkdirSync(BIN);
 
 if (os.platform() === 'win32') {
-  // copy file onnxruntime.node
-  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'onnxruntime.node'));
+  fs.mkdirSync(path.join(BIN, 'win-x64'));
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win-x64'), path.join(BIN, 'win-x64'));
 
-  // copy pdb file (this is useful in DEBUG mode)
+  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'win-x64', 'onnxruntime.node'));
   if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'))) {
-    fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'), path.join(BIN, 'onnxruntime.pdb'));
+    fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'), path.join(BIN, 'win-x64', 'onnxruntime.pdb'));
   }
 
-  // copy DLL
-  fs.copyFileSync(path.join(ONNXRUNTIME_DIST, 'bin/win-x64/native/mkldnn.dll'), path.join(BIN, 'mkldnn.dll'));
-  fs.copyFileSync(path.join(ONNXRUNTIME_DIST, 'bin/win-x64/native/onnxruntime.dll'), path.join(BIN, 'onnxruntime.dll'));
+  fs.mkdirSync(path.join(BIN, 'win_gpu-x64'));
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'win_gpu-x64'));
+
+  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'win_gpu-x64', 'onnxruntime_gpu.node'));
+  if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'))) {
+    fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'), path.join(BIN, 'win_gpu-x64', 'onnxruntime_gpu.pdb'));
+  }
 } else if (os.platform() === 'darwin') {
   throw new Error('currently not support macOS');
 } else {

@@ -15,10 +15,10 @@ if (typeof process !== 'undefined' && process && process.release && process.rele
     }
 
     // check endianness
-    if (os.endianness !== 'LE') {
+    if (os.endianness() !== 'LE') {
         throw new Error(`onnxruntime node binding does not support non little-endian platform`);
     }
-    
+
     onnxjs.InferenceSession = require('./lib/inference-session-override').OnnxRuntimeInferenceSession;
 }
 
