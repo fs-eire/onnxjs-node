@@ -1,21 +1,31 @@
 {
   "name": "onnxjs-node",
-  "version": "0.0.1",
   "description": "",
+  "version": "0.0.1",
+  "author": "fs-eire",
   "main": "index.js",
   "scripts": {
-    "prepare": "npm run build",
+    "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
     "build": "tsc && node ./scripts/build",
     "buildd": "tsc && node ./scripts/build --debug",
+    "rebuild": "tsc && node ./scripts/build --rebuild",
+    "rebuildd": "tsc && node ./scripts/build --debug --rebuild",
     "test": "mocha ./test/test-main",
     "prepublishOnly": "npm test",
     "format": "clang-format --glob=\"{{lib,test,scripts}/**/*.ts,src/**/*.{cc,h}}\" --style=file -i"
+  },
+  "binary": {
+    "module_name": "cpu/onnxruntime",
+    "module_path": "./bin/napi-v{napi_build_version}",
+    "package_name": "onnxruntime-{platform}-{arch}-{node_napi_label}.tar.gz",
+    "host": "https://github.com/fs-eire/onnxjs-node/releases/download/",
+    "remote_path": "{version}",
+    "napi_versions": [3]
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fs-eire/onnxjs-node.git"
   },
-  "author": "",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/fs-eire/onnxjs-node/issues"
@@ -32,11 +42,13 @@
     "globby": "^9.0.0",
     "mocha": "^6.0.2",
     "node-addon-api": "^1.6.2",
+    "node-pre-gyp-github": "^1.4.3",
     "onnx-proto": "^3.1.1",
     "rimraf": "^2.6.3",
     "typescript": "^3.1.6"
   },
   "dependencies": {
+    "node-pre-gyp": "^0.12.0",
     "onnxjs": "^0.1.3"
   }
 }

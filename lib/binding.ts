@@ -18,8 +18,8 @@ export interface InferenceSessionConstructor {
 }
 
 // construct binding file path
-const GPU_ENABLED = false; // TODO: handle GPU
-const suffix = GPU_ENABLED ? '_gpu' : '';
-const arch = process.platform === 'win32' ? 'win' : 'linux';
+const GPU_ENABLED = false;  // TODO: handle GPU
 
-export const binding = require(`../bin/${arch}${suffix}-x64/onnxruntime${suffix}.node`) as {InferenceSession: InferenceSessionConstructor};
+export const binding =
+    require(`../bin/napi-v3/${GPU_ENABLED ? 'gpu' : 'cpu'}/onnxruntime${GPU_ENABLED ? '_gpu' : ''}.node`) as
+    {InferenceSession: InferenceSessionConstructor};
