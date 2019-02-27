@@ -56,33 +56,27 @@ if (fs.existsSync(BIN)) {
 }
 fs.mkdirSync(BIN);
 fs.mkdirSync(path.join(BIN, 'cpu'));
-fs.mkdirSync(path.join(BIN, 'gpu'));
+fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
+if (fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'))) {
+  fs.mkdirSync(path.join(BIN, 'gpu'));
+  fs.copyFileSync(
+    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
+}
 
 if (os.platform() === 'win32') {
   fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win-x64'), path.join(BIN, 'cpu'));
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'gpu'));
 
-  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
   if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'))) {
     fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'), path.join(BIN, 'cpu', 'onnxruntime.pdb'));
   }
-
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'gpu'));
-
-  fs.copyFileSync(
-    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
   if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'))) {
     fs.copyFileSync(
         path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'), path.join(BIN, 'gpu', 'onnxruntime_gpu.pdb'));
   }
 } else if (os.platform() === 'darwin') {
-  throw new Error('currently not support macOS');
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'darwin-x64'), path.join(BIN, 'cpu'));
 } else {
   fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux-x64'), path.join(BIN, 'cpu'));
-
-  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
-
   fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux_gpu-x64'), path.join(BIN, 'gpu'));
-
-  fs.copyFileSync(
-    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
 }

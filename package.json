@@ -6,6 +6,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
+    "prepare": "tsc",
     "build": "tsc && node ./scripts/build",
     "buildd": "tsc && node ./scripts/build --debug",
     "rebuild": "tsc && node ./scripts/build --rebuild",

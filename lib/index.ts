@@ -9,7 +9,7 @@ if (typeof process !== 'undefined' && process && process.release && process.rele
     }
 
     // check if Linux or Windows
-    if (['win32', 'linux'].indexOf(os.platform()) === -1) {
+    if (['win32', 'linux', 'darwin'].indexOf(os.platform()) === -1) {
         throw new Error(`onnxruntime does not support platform '${os.platform()}'`);
     }
 
