@@ -212,7 +212,7 @@ std::vector<Tensor> InferenceSession::Run(const std::vector<Tensor> &inputTensor
   outputTensors.reserve(outputCount);
   for (size_t i = 0; i < outputCount; i++) {
     auto value = outputs[i];
-    auto &tensor = Tensor::From(value);
+    auto tensor = Tensor::From(value);
     outputTensors.push_back(tensor);
   }
 

@@ -1,4 +1,5 @@
 #include <memory>
+#include <cmath>
 #include <sstream>
 
 #include "core/session/onnxruntime_c_api.h"
@@ -99,7 +100,7 @@ Tensor Tensor::From(Napi::Value val, const char *name) {
     }
     auto dimNumber = dimValue.As<Napi::Number>();
     double dimDouble = dimNumber.DoubleValue();
-    if (floor(dimDouble) != dimDouble || dimDouble < 0 || dimDouble > 4294967295) {
+    if (std::floor(dimDouble) != dimDouble || dimDouble < 0 || dimDouble > 4294967295) {
       throw Napi::TypeError::New(env, "invalid dimension");
     }
     size_t dim = static_cast<size_t>(dimDouble);
@@ -118,7 +119,7 @@ Tensor Tensor::From(Napi::Value val, const char *name) {
   }
   auto dataTypeNumber = dataTypeValue.As<Napi::Number>();
   auto dataTypeDouble = dataTypeNumber.DoubleValue();
-  if (floor(dataTypeDouble) != dataTypeDouble || dataTypeDouble < 0 ||
+  if (std::floor(dataTypeDouble) != dataTypeDouble || dataTypeDouble < 0 ||
       dataTypeDouble > ONNX_TENSOR_ELEMENT_DATA_TYPE_COUNT) {
     throw Napi::TypeError::New(env, "tensor.type must be a valid integer");
   }

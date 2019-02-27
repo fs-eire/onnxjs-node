@@ -34,7 +34,11 @@ if (update.status !== 0) {
 
 console.log('BUILD [2/3] build node binding ...');
 
-const cmakejsArgs = [(REBUILD ? 'rebuild' : 'compile'), '-G"Visual Studio 15 2017 Win64"'];
+const cmakejsArgs = [(REBUILD ? 'rebuild' : 'compile')];
+if (process.platform === 'win32') {
+  // force generator in windows because of a bug in cmake-js: https://github.com/cmake-js/cmake-js/issues/160
+  cmakejsArgs.push('-G"Visual Studio 15 2017 Win64"');
+}
 if (DEBUG) cmakejsArgs.push('-D');
 
 const cmakejs = spawnSync(CMAKE_JS_FULL_PATH, cmakejsArgs, {shell: true, stdio: 'inherit'});
@@ -51,9 +55,10 @@ if (fs.existsSync(BIN)) {
   rimraf.sync(BIN);
 }
 fs.mkdirSync(BIN);
+fs.mkdirSync(path.join(BIN, 'cpu'));
+fs.mkdirSync(path.join(BIN, 'gpu'));
 
 if (os.platform() === 'win32') {
-  fs.mkdirSync(path.join(BIN, 'cpu'));
   fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win-x64'), path.join(BIN, 'cpu'));
 
   fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
@@ -61,11 +66,10 @@ if (os.platform() === 'win32') {
     fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'), path.join(BIN, 'cpu', 'onnxruntime.pdb'));
   }
 
-  fs.mkdirSync(path.join(BIN, 'gpu'));
   fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'gpu'));
 
   fs.copyFileSync(
-      path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
+    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
   if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'))) {
     fs.copyFileSync(
         path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'), path.join(BIN, 'gpu', 'onnxruntime_gpu.pdb'));
@@ -73,7 +77,12 @@ if (os.platform() === 'win32') {
 } else if (os.platform() === 'darwin') {
   throw new Error('currently not support macOS');
 } else {
-  // linux
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux-x64'), path.join(BIN, 'cpu'));
 
-  // TODO: copy linux binaries
+  fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
+
+  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux_gpu-x64'), path.join(BIN, 'gpu'));
+
+  fs.copyFileSync(
+    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
 }
