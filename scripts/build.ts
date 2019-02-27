@@ -24,7 +24,7 @@ const ONNXRUNTIME_DIST = path.join(ROOT, 'onnxruntime', 'bin');
 
 console.log('BUILD [1/3] syncing submodules ...');
 
-const update = spawnSync('git submodule update --init --recursive', {shell: true, stdio: 'inherit', cwd: ROOT});
+const update = spawnSync('git submodule update --init', {shell: true, stdio: 'inherit', cwd: ROOT});
 if (update.status !== 0) {
   if (update.error) {
     console.error(update.error);
