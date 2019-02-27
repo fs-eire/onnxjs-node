@@ -60,7 +60,7 @@ fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BI
 if (fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'))) {
   fs.mkdirSync(path.join(BIN, 'gpu'));
   fs.copyFileSync(
-    path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
+      path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'), path.join(BIN, 'gpu', 'onnxruntime_gpu.node'));
 }
 
 if (os.platform() === 'win32') {

@@ -1,5 +1,5 @@
-#include <memory>
 #include <cmath>
+#include <memory>
 #include <sstream>
 
 #include "core/session/onnxruntime_c_api.h"
