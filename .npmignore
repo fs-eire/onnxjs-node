@@ -1,4 +1,5 @@
 /.vscode/
+/bin/
 /build/
 /deps/
 /onnxruntime/
@@ -8,6 +9,9 @@
 
 /lib/**/*.ts
 /lib/**/*.js.map
+
+/types/**/*
+!/types/lib/index.d.ts
 
 /.clang-format
 /.gitmodules

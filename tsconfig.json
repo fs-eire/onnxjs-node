@@ -8,6 +8,8 @@
     "compilerOptions": {
       "module": "commonjs",
       "moduleResolution": "node",
+      "declaration": true,
+      "declarationDir": "types",
       "esModuleInterop": true,
       "target": "es5",
       "lib": [
