@@ -1,7 +1,7 @@
 {
   "name": "onnxjs-node",
   "description": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "fs-eire",
   "main": "./lib/index.js",
   "scripts": {
@@ -21,7 +21,9 @@
     "package_name": "onnxruntime-{platform}-{arch}-{node_napi_label}.tar.gz",
     "host": "https://github.com/fs-eire/onnxjs-node/releases/download/",
     "remote_path": "v{version}",
-    "napi_versions": [3]
+    "napi_versions": [
+      3
+    ]
   },
   "repository": {
     "type": "git",
@@ -46,7 +48,7 @@
     "node-pre-gyp-github": "^1.4.3",
     "onnx-proto": "^3.1.1",
     "rimraf": "^2.6.3",
-    "typescript": "^3.1.6"
+    "typescript": "^3.3.3333"
   },
   "dependencies": {
     "node-pre-gyp": "^0.12.0",
