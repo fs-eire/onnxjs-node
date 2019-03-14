@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "core/session/onnxruntime_c_api.h"
+#include "onnxruntime_c_api.h"
 
 #include "tensor.h"
 
