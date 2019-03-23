@@ -15,11 +15,11 @@ npm install onnxjs-node
 ## Supported Platforms
 OS       |Arch |CPU/GPU |NAPI version |ONNXRuntime version
 ---------|-----|--------|-------------|--------------------
- Windows | x64 | CPU    | v3          | v0.2.1
- Linux   | x64 | CPU    | v3          | v0.2.1
- macOS   | x64 | CPU    | v3          | v0.2.1
- Windows | x64 | GPU    | v3          | v0.2.1
- Linux   | x64 | GPU    | v3          | v0.2.1
+ Windows | x64 | CPU    | v3          | v0.3.0
+ Linux   | x64 | CPU    | v3          | v0.3.0
+ macOS   | x64 | CPU    | v3          | v0.3.0
+ Windows | x64 | GPU    | v3          | v0.3.0
+ Linux   | x64 | GPU    | v3          | v0.3.0
 
 ## Usage
 There are 2 options to import `onnxjs-node`.
@@ -54,6 +54,8 @@ session = new onnx.InferenceSession({backendHint: 'wasm'});  // use WebAssembly 
 ## Documentation
 - [ONNX.js Home](https://github.com/Microsoft/onnxjs)
 - [ONNXRuntime](https://github.com/Microsoft/onnxruntime)
+- [Nuget package: Microsoft.ML.OnnxRuntime](https://www.nuget.org/packages/Microsoft.ML.OnnxRuntime/)
+- [Nuget package: Microsoft.ML.OnnxRuntime.Gpu](https://www.nuget.org/packages/Microsoft.ML.OnnxRuntime.Gpu/)
 
 # License
 Copyright (c) fs-eire. All rights reserved.

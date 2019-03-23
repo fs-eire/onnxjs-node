@@ -1,5 +1,3 @@
-#include <core/providers/cpu/cpu_provider_factory.h>
-
 #include "inference-session-wrap.h"
 #include "inference-session.h"
 #include "utils.h"

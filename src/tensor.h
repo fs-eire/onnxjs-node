@@ -6,7 +6,7 @@
 #include <napi.h>
 #include <vector>
 
-#include "core/session/onnxruntime_c_api.h"
+#include "onnxruntime_c_api.h"
 
 // a simple structure that represents a tensor.
 //
