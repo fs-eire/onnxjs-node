@@ -91,7 +91,7 @@ Tensor Tensor::From(Napi::Value val, const char *name) {
 
   auto dimsArray = dimsValue.As<Napi::Array>();
   auto len = dimsArray.Length();
-  std::vector<size_t> dims;
+  std::vector<int64_t> dims;
   dims.reserve(len);
   for (uint32_t i = 0; i < len; i++) {
     Napi::Value dimValue = dimsArray[i];
@@ -103,7 +103,7 @@ Tensor Tensor::From(Napi::Value val, const char *name) {
     if (std::floor(dimDouble) != dimDouble || dimDouble < 0 || dimDouble > 4294967295) {
       throw Napi::TypeError::New(env, "invalid dimension");
     }
-    size_t dim = static_cast<size_t>(dimDouble);
+    int64_t dim = static_cast<int64_t>(dimDouble);
     dims.push_back(dim);
   }
 
@@ -186,16 +186,11 @@ Tensor Tensor::From(OrtValue *value, const char *name) {
     throw std::runtime_error(what.str());
   }
 
-  std::vector<size_t> dimsUnsigned(dimsCount);
-  for (size_t i = 0; i < dimsCount; i++) {
-    dimsUnsigned[i] = static_cast<size_t>(dims[i]);
-  }
-
   Tensor t;
   t.data = data;
   t.dataLength = byteLength;
   t.type = dataType;
-  t.shape = dimsUnsigned;
+  t.shape = dims;
   t.value = value;
   return t;
 }

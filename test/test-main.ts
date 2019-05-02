@@ -8,9 +8,21 @@ import * as onnx from 'onnxjs';
 import {Tensor} from 'onnxjs';
 import * as path from 'path';
 
+// ONNXRuntime does not support non 4-dimensional inputs for ConvTranspose
+// https://github.com/Microsoft/onnxruntime/blob/v0.1.5/onnxruntime/core/providers/cpu/nn/conv_transpose.cc#L89-L93
+const SKIPPED_TESTS = [
+  'test_convtranspose_1d',
+  'test_convtranspose_3d',
+];
+
 const NODE_TESTS_ROOT = path.join(__dirname, '../deps/onnx/onnx/backend/test/data/node');
 const models = fs.readdirSync(NODE_TESTS_ROOT);
 for (const model of models) {
+  // skipped tests
+  if (SKIPPED_TESTS.indexOf(model) !== -1) {
+    continue;
+  }
+
   // read each model folders
   const modelFolder = path.join(NODE_TESTS_ROOT, model);
   let modelPath: string;

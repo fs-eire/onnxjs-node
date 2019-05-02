@@ -9,3 +9,5 @@
 /scripts/*.js.map
 /test/*.js
 /test/*.js.map
+
+/.vscode/ipch/
