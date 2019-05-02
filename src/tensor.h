@@ -23,7 +23,7 @@ struct Tensor {
   ONNXTensorElementDataType type;
 
   // specify the tensor's shape
-  std::vector<size_t> shape;
+  std::vector<int64_t> shape;
 
   // specify the tensor's name. This is optional.
   const char *name;
