@@ -1,7 +1,7 @@
 {
   "name": "onnxjs-node",
   "description": "a Node.js binding of ONNXRuntime that works seamlessly with ONNX.js",
-  "version": "0.4.0-rev.1",
+  "version": "0.4.1",
   "author": "fs-eire",
   "main": "./lib/index.js",
   "scripts": {
@@ -49,13 +49,12 @@
     "mocha": "^6.1.4",
     "node-addon-api": "^1.6.3",
     "node-pre-gyp-github": "^1.4.3",
-    "onnx-proto": "^4.0.2",
+    "onnx-proto": "^4.0.4",
     "rimraf": "^2.6.3",
     "typescript": "^3.4.5"
   },
   "dependencies": {
     "node-pre-gyp": "^0.13.0",
-    "onnxjs": "^0.1.6",
-    "protobufjs": "^6.8.8"
+    "onnxjs": "^0.1.6"
   }
 }
