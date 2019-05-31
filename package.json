@@ -38,6 +38,9 @@
     "url": "https://github.com/fs-eire/onnxjs-node/issues"
   },
   "homepage": "https://github.com/fs-eire/onnxjs-node#readme",
+  "engines": {
+    "node": ">=8.11.2"
+  },
   "devDependencies": {
     "@types/fs-extra": "^7.0.0",
     "@types/mocha": "^5.2.7",

@@ -13,13 +13,13 @@ npm install onnxjs-node
 *NOTE: binary files will be pulled from github during the `npm install` process.*
 
 ## Supported Platforms
-OS       |Arch |CPU/GPU |NAPI version |ONNXRuntime version
----------|-----|--------|-------------|--------------------
- Windows | x64 | CPU    | v3          | v0.4.0
- Linux   | x64 | CPU    | v3          | v0.4.0
- macOS   | x64 | CPU    | v3          | v0.4.0
- Windows | x64 | GPU    | v3          | v0.4.0
- Linux   | x64 | GPU    | v3          | v0.4.0
+OS       |Arch |CPU/GPU |NAPI version |Node.js version | ONNXRuntime version
+---------|-----|--------|-------------|----------------|---------------------
+ Windows | x64 | CPU    | v3          | v8.11.2+       | v0.4.0
+ Linux   | x64 | CPU    | v3          | v8.11.2+       | v0.4.0
+ macOS   | x64 | CPU    | v3          | v8.11.2+       | v0.4.0
+ Windows | x64 | GPU    | v3          | v8.11.2+       | v0.4.0
+ Linux   | x64 | GPU    | v3          | v8.11.2+       | v0.4.0
 
 ## Usage
 There are 2 options to import `onnxjs-node`.
