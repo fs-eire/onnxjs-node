@@ -33,10 +33,6 @@ if (update.status !== 0) {
 console.log('BUILD [2/3] build node binding ...');
 
 const cmakejsArgs = [(REBUILD ? 'rebuild' : 'compile')];
-if (process.platform === 'win32') {
-  // force generator in windows because of a bug in cmake-js: https://github.com/cmake-js/cmake-js/issues/160
-  cmakejsArgs.push('-G"Visual Studio 15 2017 Win64"');
-}
 if (DEBUG) cmakejsArgs.push('-D');
 
 const cmakejs = spawnSync(CMAKE_JS_FULL_PATH, cmakejsArgs, {shell: true, stdio: 'inherit'});
