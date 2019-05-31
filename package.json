@@ -39,19 +39,17 @@
   },
   "homepage": "https://github.com/fs-eire/onnxjs-node#readme",
   "devDependencies": {
-    "@types/fs-extra": "^5.0.5",
-    "@types/mocha": "^5.2.6",
-    "@types/rimraf": "^2.0.2",
+    "@types/fs-extra": "^7.0.0",
+    "@types/mocha": "^5.2.7",
     "clang-format": "^1.2.4",
     "cmake-js": "^5.2.0",
-    "fs-extra": "^7.0.1",
+    "fs-extra": "^8.0.1",
     "globby": "^9.2.0",
     "mocha": "^6.1.4",
     "node-addon-api": "^1.6.3",
     "node-pre-gyp-github": "^1.4.3",
     "onnx-proto": "^4.0.4",
-    "rimraf": "^2.6.3",
-    "typescript": "^3.4.5"
+    "typescript": "^3.5.1"
   },
   "dependencies": {
     "node-pre-gyp": "^0.13.0",

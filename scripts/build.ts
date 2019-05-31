@@ -1,9 +1,7 @@
 import {execSync, spawnSync} from 'child_process';
-import * as fs from 'fs';
-import * as fs_extra from 'fs-extra';
+import * as fs from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 // command line flags
 const DEBUG = process.argv.slice(2).indexOf('--debug') !== -1;
@@ -51,10 +49,7 @@ if (cmakejs.status !== 0) {
 
 console.log('BUILD [3/3] binplace build artifacts ...');
 
-if (fs.existsSync(BIN)) {
-  rimraf.sync(BIN);
-}
-fs.mkdirSync(BIN);
+fs.emptyDirSync(BIN);
 fs.mkdirSync(path.join(BIN, 'cpu'));
 fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.node'), path.join(BIN, 'cpu', 'onnxruntime.node'));
 if (fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'))) {
@@ -64,8 +59,8 @@ if (fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.node'))) {
 }
 
 if (os.platform() === 'win32') {
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win-x64'), path.join(BIN, 'cpu'));
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'gpu'));
+  fs.copySync(path.join(ONNXRUNTIME_DIST, 'win-x64'), path.join(BIN, 'cpu'));
+  fs.copySync(path.join(ONNXRUNTIME_DIST, 'win_gpu-x64'), path.join(BIN, 'gpu'));
 
   if (DEBUG && fs.existsSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'))) {
     fs.copyFileSync(path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime.pdb'), path.join(BIN, 'cpu', 'onnxruntime.pdb'));
@@ -75,8 +70,8 @@ if (os.platform() === 'win32') {
         path.join(BUILD_OUTPUT_FOLDER, 'onnxruntime_gpu.pdb'), path.join(BIN, 'gpu', 'onnxruntime_gpu.pdb'));
   }
 } else if (os.platform() === 'darwin') {
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'darwin-x64'), path.join(BIN, 'cpu'));
+  fs.copySync(path.join(ONNXRUNTIME_DIST, 'darwin-x64'), path.join(BIN, 'cpu'));
 } else {
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux-x64'), path.join(BIN, 'cpu'));
-  fs_extra.copySync(path.join(ONNXRUNTIME_DIST, 'linux_gpu-x64'), path.join(BIN, 'gpu'));
+  fs.copySync(path.join(ONNXRUNTIME_DIST, 'linux-x64'), path.join(BIN, 'cpu'));
+  fs.copySync(path.join(ONNXRUNTIME_DIST, 'linux_gpu-x64'), path.join(BIN, 'gpu'));
 }
