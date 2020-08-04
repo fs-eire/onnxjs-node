@@ -4,8 +4,7 @@ import '..';
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as onnx_proto from 'onnx-proto';
-import * as onnx from 'onnxjs';
-import {Tensor} from 'onnxjs';
+import {InferenceSession, Tensor} from 'onnxjs';
 import * as path from 'path';
 
 // ONNXRuntime does not support non 4-dimensional inputs for ConvTranspose
@@ -63,7 +62,7 @@ for (const model of models) {
 
   // add cases
   describe(`node - ${model}`, () => {
-    let session: onnx.InferenceSession;
+    let session: InferenceSession;
     before(async () => {
       session = new onnx.InferenceSession({backendHint: 'onnxruntime'});
       await session.loadModel(modelPath);

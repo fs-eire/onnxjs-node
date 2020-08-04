@@ -1,29 +1,14 @@
 {
   "name": "onnxjs-node",
-  "description": "a Node.js binding of ONNXRuntime that works seamlessly with ONNX.js",
-  "version": "0.4.1",
+  "description": "ONNXRuntime backend for ONNX.js",
+  "version": "1.4.0",
   "author": "fs-eire",
   "main": "./lib/index.js",
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build=false || npm run build",
     "prepare": "tsc",
-    "build": "tsc && node ./scripts/build",
-    "buildd": "tsc && node ./scripts/build --debug",
-    "rebuild": "tsc && node ./scripts/build --rebuild",
-    "rebuildd": "tsc && node ./scripts/build --debug --rebuild",
     "test": "mocha ./test/test-main",
     "prepublishOnly": "npm test",
     "format": "clang-format --glob=\"{{lib,test,scripts}/**/*.ts,src/**/*.{cc,h}}\" --style=file -i"
-  },
-  "binary": {
-    "module_name": "cpu/onnxruntime",
-    "module_path": "./bin/napi-v{napi_build_version}",
-    "package_name": "onnxruntime-{platform}-{arch}-{node_napi_label}.tar.gz",
-    "host": "https://github.com/fs-eire/onnxjs-node/releases/download/",
-    "remote_path": "v{version}",
-    "napi_versions": [
-      3
-    ]
   },
   "repository": {
     "type": "git",
@@ -39,23 +24,22 @@
   },
   "homepage": "https://github.com/fs-eire/onnxjs-node#readme",
   "engines": {
-    "node": ">=8.11.2"
+    "node": ">=12.0.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^7.0.0",
-    "@types/mocha": "^5.2.7",
-    "clang-format": "^1.2.4",
-    "cmake-js": "^5.2.0",
-    "fs-extra": "^8.0.1",
-    "globby": "^9.2.0",
-    "mocha": "^6.1.4",
-    "node-addon-api": "^1.6.3",
-    "node-pre-gyp-github": "^1.4.3",
+    "@types/fs-extra": "^9.0.1",
+    "@types/mocha": "^8.0.1",
+    "clang-format": "^1.4.0",
+    "fs-extra": "^9.0.1",
+    "globby": "^11.0.1",
+    "mocha": "^8.1.0",
     "onnx-proto": "^4.0.4",
-    "typescript": "^3.5.1"
+    "typescript": "^3.9.7"
   },
   "dependencies": {
-    "node-pre-gyp": "^0.13.0",
-    "onnxjs": "^0.1.6"
+    "onnxruntime": "^1.4.0"
+  },
+  "peerDependencies": {
+    "onnxjs": "0.x"
   }
 }

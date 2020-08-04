@@ -5,23 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Tests (Windows, C++)",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "node.exe",
-            "args": [
-                "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/test/test-main"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": true
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Debug Tests (typescript)",
@@ -33,7 +16,8 @@
                 "${workspaceFolder}/test/test-main"
             ],
             "internalConsoleOptions": "openOnSessionStart",
-            "sourceMaps": true
+            "sourceMaps": true,
+            "smartStep": true
         }
     ]
 }

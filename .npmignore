@@ -1,9 +1,5 @@
 /.vscode/
-/bin/
-/build/
 /deps/
-/onnxruntime/
-/scripts/
 /src/
 /test/
 
@@ -15,5 +11,4 @@
 
 /.clang-format
 /.gitmodules
-/CMakeLists.txt
 /tsconfig.json

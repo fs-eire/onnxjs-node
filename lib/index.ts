@@ -18,8 +18,16 @@ if (typeof process !== 'undefined' && process && process.release && process.rele
     throw new Error(`onnxruntime node binding does not support non little-endian platform`);
   }
 
-  // force re-assign overwritten property 'InferenceSession'
-  (onnxjs as any).InferenceSession = require('./inference-session-override').OnnxRuntimeInferenceSession;
+  // create a new onnx object and assign property 'InferenceSession'
+  const onnx: typeof onnxjs = Object.create(onnxjs);
+  Object.defineProperty(onnx, 'InferenceSession', {
+    enumerable: true,
+    get: function() {
+      return require('./inference-session-override').OnnxRuntimeInferenceSession;
+    }
+  });
+
+  (global as any).onnx = onnx;
 }
 
-export = onnxjs;
+export = onnx;

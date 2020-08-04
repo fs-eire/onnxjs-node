@@ -1,21 +1,16 @@
-import {InferenceSession, Tensor} from 'onnxjs';
-import * as Binding from './binding';
+import * as onnxjs from 'onnxjs';
+import * as onnxruntime from 'onnxruntime';
 
-const OnnxjsInferenceSession = InferenceSession;
+export class OnnxRuntimeInferenceSession implements onnxjs.InferenceSession {
+  private onnxjsFallback?: onnxjs.InferenceSession;
+  private binding?: onnxruntime.InferenceSession;
 
-export class OnnxRuntimeInferenceSession implements InferenceSession {
-  private onnxjsFallback?: InferenceSession;
-
-  private binding?: Binding.InferenceSession;
-
-  constructor(config?: InferenceSession.Config) {
+  constructor(config?: onnxjs.InferenceSession.Config) {
     let useOnnxRuntime = !config || typeof config.backendHint !== 'string' || config.backendHint === 'onnxruntime';
 
-    if (useOnnxRuntime) {
-      this.binding = new Binding.binding.InferenceSession();
-    } else {
-      this.onnxjsFallback = new OnnxjsInferenceSession(config);
-      console.log('fallback');
+    if (!useOnnxRuntime) {
+      this.onnxjsFallback = new onnxjs.InferenceSession(config);
+      console.log('fallback to ONNX.js inference session');
     }
   }
 
@@ -31,15 +26,12 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
     if (typeof arg0 !== 'string') {
       throw new TypeError('a string model path is expected');
     }
-    if (!this.binding) {
-      throw new Error('binding is not assigned');
-    }
 
-    this.binding.loadModel(arg0);
+    this.binding = await onnxruntime.InferenceSession.create(arg0);
   }
 
-  async run(inputFeed: InferenceSession.InputType, options?: InferenceSession.RunOptions):
-      Promise<ReadonlyMap<string, Tensor>> {
+  async run(inputFeed: onnxjs.InferenceSession.InputType, options?: onnxjs.InferenceSession.RunOptions):
+      Promise<ReadonlyMap<string, onnxjs.Tensor>> {
     if (this.onnxjsFallback) {
       return this.onnxjsFallback.run(inputFeed, options);
     }
@@ -48,37 +40,34 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
       throw new Error('session not initialized');
     }
 
-    const input = new Array<Binding.Tensor>(this.binding.inputNames.length);
-    let output: Array<Binding.Tensor>;
+    const input = {};
     if (inputFeed instanceof Map) {
-      this.binding.inputNames.forEach((name, i) => {
+      this.binding.inputNames.forEach((name) => {
         const t = inputFeed.get(name);
         if (!t) {
           throw new Error(`missing input '${name}'`);
         }
-        input[i] = {data: t.data, dims: t.dims, type: getTensorDataTypeFromString(t.type)};
+        input[name] = new onnxruntime.Tensor(t.type, t.data, t.dims);
       });
-      output = await this.binding.run(input);
     } else if (Array.isArray(inputFeed)) {
       inputFeed.forEach((t, i) => {
-        input[i] = {data: t.data, dims: t.dims, type: getTensorDataTypeFromString(t.type)};
+        input[this.binding!.inputNames[i]] = new onnxruntime.Tensor(t.type, t.data, t.dims);
       });
-      output = await this.binding.run(input);
     } else {
-      this.binding.inputNames.forEach((name, i) => {
+      this.binding.inputNames.forEach((name) => {
         const t = (inputFeed as {readonly [name: string]: any})[name];
         if (!t) {
           throw new Error(`missing input '${name}'`);
         }
-        input[i] = {data: t.data, dims: t.dims, type: getTensorDataTypeFromString(t.type)};
+        input[name] = new onnxruntime.Tensor(t.type, t.data, t.dims);
       });
-      output = await this.binding.run(input);
     }
+    const output = await this.binding.run(input);
 
-    const result = new Map<string, Tensor>();
-    this.binding.outputNames.forEach((name, i) => {
-      const t = output[i];
-      result.set(name, new Tensor(t.data as Tensor.DataType, getTensorDataTypeFromEnum(t.type), t.dims));
+    const result = new Map<string, onnxjs.Tensor>();
+    this.binding.outputNames.forEach((name) => {
+      const t = output[name];
+      result.set(name, new onnxjs.Tensor(t.data as onnxjs.Tensor.DataType, t.type as onnxjs.Tensor.Type, t.dims));
     });
 
     return result;
@@ -98,33 +87,5 @@ export class OnnxRuntimeInferenceSession implements InferenceSession {
     }
 
     throw new Error('Method not implemented.');
-  }
-}
-
-function getTensorDataTypeFromString(type: string): number {
-  switch (type) {
-    case 'float32':
-      return 1;
-    case 'int32':
-      return 6;
-    case 'bool':
-      return 9;
-    default:
-      return -1;
-  }
-}
-
-function getTensorDataTypeFromEnum(type: number): Tensor.Type {
-  switch (type) {
-    case 1:
-      return 'float32';
-    case 6:
-      return 'int32';
-    case 9:
-      return 'bool';
-    case 8:
-      return 'string';
-    default:
-      throw new Error(`unsupported data type: ${type}`);
   }
 }
