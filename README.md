@@ -33,10 +33,10 @@ There are 2 options to import `onnxjs-node`.
     ```
  -  Option 2 - add a single line to require `onnxjs-node`:
     ```js
-    const onnx = require('onnxjs');
-    require('onnxjs-node');  // this line can be put on the top as well
+    require('onnxjs');
+    require('onnxjs-node'); // this line reset global variable 'onnx'
 
-    // use 'onnx'
+    // use global variable 'onnx'
     // ...
     ```
 
@@ -48,7 +48,7 @@ Coming soon...
 ### Backend Fallback
 After `onnxjs-node` is imported, ONNXRuntime backend will be used by default. However, it is possible to fallback to other backend by specifying the session option `backendHint`:
 ```js
-session = new onnx.InferenceSession({backendHint: 'wasm'});  // use WebAssembly backend
+session = new onnx.InferenceSession({backendHint: 'wasm'});  // use ONNX.js WebAssembly backend
 ```
 
 ## Documentation
